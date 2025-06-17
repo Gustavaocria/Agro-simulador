@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Agrícola</title>
+    <!-- Inclui o Tailwind CSS para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para o corpo da página */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Um verde bem claro */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Alinha no topo para permitir rolagem se necessário */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Estilos para o contêiner principal do simulador */
+        .simulator-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* Bordas arredondadas */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+            max-width: 900px; /* Largura máxima para desktops */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            animation: fadeIn 1s ease-out; /* Animação de entrada */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilos para botões e inputs */
+        .btn-primary {
+            background-color: #16a34a; /* Verde escuro */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Bordas arredondadas */
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #15803d; /* Verde mais escuro no hover */
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #e2e8f0; /* Cinza claro */
+            color: #334155; /* Cinza escuro */
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #cbd5e1; /* Cinza mais escuro no hover */
+            transform: translateY(-2px);
+        }
+
+        input[type="number"],
+        select {
+            border: 1px solid #d1d5db; /* Borda cinza */
+            border-radius: 0.5rem;
+            padding: 0.6rem 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #22c55e; /* Verde no foco */
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+
+        /* Classes para mensagens */
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-weight: 500;
+            margin-top: 1rem;
+            display: none; /* Escondido por padrão */
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+
+        .message-box.show {
+            display: block;
+            opacity: 1;
+        }
+
+        .message-success {
+            background-color: #dcfce7; /* Verde claro */
+            color: #16a34a; /* Verde escuro */
+            border: 1px solid #86efac;
+        }
+
+        .message-error {
+            background-color: #fee2e2; /* Vermelho claro */
+            color: #ef4444; /* Vermelho escuro */
+            border: 1px solid #fca5a5;
+        }
+
+        /* Layout responsivo com Flexbox para seções */
+        .section-grid {
+            display: flex;
+            flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
+            gap: 1.5rem; /* Espaçamento entre as colunas */
+        }
+
+        .section-grid > div {
+            flex: 1 1 calc(50% - 0.75rem); /* Cada item ocupa cerca de metade da largura */
+            min-width: 300px; /* Largura mínima para evitar que fiquem muito estreitos */
+        }
+
+        /* Responsividade para telas menores */
+        @media (max-width: 768px) {
+            .simulator-container {
+                padding: 1.5rem;
+            }
+            .section-grid > div {
+                flex: 1 1 100%; /* Em telas pequenas, cada item ocupa a largura total */
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="simulator-container">
+        <h1 class="text-4xl font-extrabold text-center text-green-700 mb-6">Simulador Agrícola 🌾</h1>
+
+        <!-- Seção de Configuração Inicial -->
+        <div id="initial-setup" class="bg-green-50 p-6 rounded-xl border border-green-200">
+            <h2 class="text-2xl font-bold text-green-800 mb-4">Início da Jornada Rural</h2>
+            <p class="text-green-700 mb-4">Defina seu orçamento inicial para começar a construir seu império agrícola.</p>
+            <div class="flex flex-col md:flex-row items-center gap-4">
+                <label for="initialBudgetInput" class="text-lg text-gray-700 whitespace-nowrap">Orçamento Inicial (R$):</label>
+                <input type="number" id="initialBudgetInput" class="flex-grow p-3 rounded-lg border-2 border-green-300 focus:border-green-500 focus:ring-green-500" value="10000" min="100">
+                <button id="startButton" class="btn-primary md:w-auto">Iniciar Simulação</button>
+            </div>
+            <div id="setupMessageBox" class="message-box mt-4"></div>
+        </div>
+
+        <!-- Seção Principal do Simulador (escondida inicialmente) -->
+        <div id="game-area" class="hidden">
+            <!-- Informações do Jogador -->
+            <div class="bg-green-100 p-6 rounded-xl border border-green-300 mb-6">
+                <h2 class="text-2xl font-bold text-green-800 mb-4">Sua Fazenda</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg text-gray-800">
+                    <div><span class="font-semibold">Orçamento:</span> <span id="budgetDisplay" class="text-green-700 font-bold">R$ 0.00</span></div>
+                    <div><span class="font-semibold">Itens no Inventário:</span></div>
+                    <ul id="inventoryList" class="list-disc list-inside col-span-full">
+                        <!-- Itens do inventário serão populados aqui -->
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section-grid">
+                <!-- Seção de Compra -->
+                <div class="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                    <h2 class="text-2xl font-bold text-blue-800 mb-4">Mercado de Compra</h2>
+                    <p class="text-blue-700 mb-4">O que você deseja adquirir para sua fazenda?</p>
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <label for="buyItem" class="block text-gray-700 text-sm font-bold mb-2">Item:</label>
+                            <select id="buyItem" class="form-select w-full p-3 rounded-lg border-2 border-blue-300 focus:border-blue-500 focus:ring-blue-500">
+                                <!-- Opções serão populadas via JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="buyQuantity" class="block text-gray-700 text-sm font-bold mb-2">Quantidade:</label>
+                            <input type="number" id="buyQuantity" class="form-input w-full p-3 rounded-lg border-2 border-blue-300 focus:border-blue-500 focus:ring-blue-500" value="1" min="1">
+                        </div>
+                        <p class="text-blue-600">Preço por unidade: <span id="buyPriceDisplay">R$ 0.00</span></p>
+                        <button id="buyButton" class="btn-primary">Comprar</button>
+                    </div>
+                    <div id="buyMessageBox" class="message-box"></div>
+                </div>
+
+                <!-- Seção de Venda -->
+                <div class="bg-red-50 p-6 rounded-xl border border-red-200">
+                    <h2 class="text-2xl font-bold text-red-800 mb-4">Mercado de Venda</h2>
+                    <p class="text-red-700 mb-4">O que você deseja vender de sua produção?</p>
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <label for="sellItem" class="block text-gray-700 text-sm font-bold mb-2">Item:</label>
+                            <select id="sellItem" class="form-select w-full p-3 rounded-lg border-2 border-red-300 focus:border-red-500 focus:ring-red-500">
+                                <!-- Opções serão populadas via JS -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sellQuantity" class="block text-gray-700 text-sm font-bold mb-2">Quantidade:</label>
+                            <input type="number" id="sellQuantity" class="form-input w-full p-3 rounded-lg border-2 border-red-300 focus:border-red-500 focus:ring-red-500" value="1" min="1">
+                        </div>
+                        <p class="text-red-600">Preço por unidade: <span id="sellPriceDisplay">R$ 0.00</span></p>
+                        <button id="sellButton" class="btn-primary">Vender</button>
+                    </div>
+                    <div id="sellMessageBox" class="message-box"></div>
+                </div>
+            </div>
+
+            <!-- Botão de Reiniciar -->
+            <div class="mt-8 text-center">
+                <button id="resetButton" class="btn-secondary">Reiniciar Simulação</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais para o estado do jogo
+        let budget = 0;
+        let inventory = {}; // Armazena a quantidade de cada item
+        let marketItems = [
+            { id: 'corn', name: 'Milho', price: 50, type: 'crop' },
+            { id: 'wheat', name: 'Trigo', price: 60, type: 'crop' },
+            { id: 'cow', name: 'Vaca', price: 1500, type: 'animal' },
+            { id: 'tractor', name: 'Trator', price: 20000, type: 'equipment' },
+            { id: 'chicken', name: 'Galinha', price: 30, type: 'animal' },
+            { id: 'eggs', name: 'Ovos (dúzia)', price: 10, type: 'product' },
+            { id: 'milk', name: 'Leite (litro)', price: 4, type: 'product' }
+        ];
+
+        // Elementos do DOM
+        const initialSetupDiv = document.getElementById('initial-setup');
+        const gameAreaDiv = document.getElementById('game-area');
+        const initialBudgetInput = document.getElementById('initialBudgetInput');
+        const startButton = document.getElementById('startButton');
+        const setupMessageBox = document.getElementById('setupMessageBox');
+
+        const budgetDisplay = document.getElementById('budgetDisplay');
+        const inventoryList = document.getElementById('inventoryList');
+
+        const buyItemSelect = document.getElementById('buyItem');
+        const buyQuantityInput = document.getElementById('buyQuantity');
+        const buyPriceDisplay = document.getElementById('buyPriceDisplay');
+        const buyButton = document.getElementById('buyButton');
+        const buyMessageBox = document.getElementById('buyMessageBox');
+
+        const sellItemSelect = document.getElementById('sellItem');
+        const sellQuantityInput = document.getElementById('sellQuantity');
+        const sellPriceDisplay = document.getElementById('sellPriceDisplay');
+        const sellButton = document.getElementById('sellButton');
+        const sellMessageBox = document.getElementById('sellMessageBox');
+
+        const resetButton = document.getElementById('resetButton');
+
+        // --- Funções de Ajuda ---
+
+        /**
+         * Exibe uma mensagem na tela por um tempo limitado.
+         * @param {HTMLElement} messageBoxElement - O elemento div onde a mensagem será exibida.
+         * @param {string} message - O texto da mensagem.
+         * @param {'success'|'error'} type - O tipo da mensagem (para aplicar classes CSS).
+         */
+        function showMessage(messageBoxElement, message, type) {
+            messageBoxElement.textContent = message;
+            messageBoxElement.className = `message-box show message-${type}`;
+            setTimeout(() => {
+                messageBoxElement.classList.remove('show');
+                messageBoxElement.textContent = ''; // Limpa o texto após a transição
+            }, 3000); // Mensagem desaparece após 3 segundos
+        }
+
+        /**
+         * Formata um valor numérico para a moeda brasileira (R$).
+         * @param {number} value - O valor a ser formatado.
+         * @returns {string} O valor formatado.
+         */
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // --- Funções de Atualização da UI ---
+
+        /**
+         * Atualiza a exibição do orçamento na tela.
+         */
+        function updateBudgetDisplay() {
+            budgetDisplay.textContent = formatCurrency(budget);
+        }
+
+        /**
+         * Atualiza a lista de itens no inventário.
+         */
+        function updateInventoryDisplay() {
+            inventoryList.innerHTML = ''; // Limpa a lista existente
+            let hasItems = false;
+            for (const itemId in inventory) {
+                if (inventory[itemId] > 0) {
+                    hasItems = true;
+                    const item = marketItems.find(i => i.id === itemId);
+                    if (item) {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = `${item.name}: ${inventory[itemId]}`;
+                        inventoryList.appendChild(listItem);
+                    }
+                }
+            }
+            if (!hasItems) {
+                const listItem = document.createElement('li');
+                listItem.textContent = 'Nenhum item no inventário.';
+                inventoryList.appendChild(listItem);
+            }
+        }
+
+        /**
+         * Popula os dropdowns de compra e venda e atualiza os preços exibidos.
+         */
+        function populateMarketDropdowns() {
+            buyItemSelect.innerHTML = '';
+            sellItemSelect.innerHTML = '';
+
+            marketItems.forEach(item => {
+                const optionBuy = document.createElement('option');
+                optionBuy.value = item.id;
+                optionBuy.textContent = `${item.name} (R$ ${item.price.toFixed(2)})`;
+                buyItemSelect.appendChild(optionBuy);
+
+                // Só adiciona ao dropdown de venda se o item estiver no inventário ou for vendável (e.g., produtos)
+                // Para este simulador simples, vamos adicionar todos os itens vendáveis que não são apenas equipamentos
+                if (item.type !== 'equipment') {
+                    const optionSell = document.createElement('option');
+                    optionSell.value = item.id;
+                    optionSell.textContent = `${item.name} (R$ ${(item.price * 0.9).toFixed(2)})`; // Preço de venda ligeiramente menor
+                    sellItemSelect.appendChild(optionSell);
+                }
+            });
+
+            // Atualiza os preços iniciais exibidos
+            updateBuyPriceDisplay();
+            updateSellPriceDisplay();
+        }
+
+        /**
+         * Atualiza o preço do item selecionado na seção de compra.
+         */
+        function updateBuyPriceDisplay() {
+            const selectedItemId = buyItemSelect.value;
+            const selectedItem = marketItems.find(item => item.id === selectedItemId);
+            if (selectedItem) {
+                buyPriceDisplay.textContent = formatCurrency(selectedItem.price);
+            } else {
+                buyPriceDisplay.textContent = formatCurrency(0);
+            }
+        }
+
+        /**
+         * Atualiza o preço do item selecionado na seção de venda.
+         */
+        function updateSellPriceDisplay() {
+            const selectedItemId = sellItemSelect.value;
+            const selectedItem = marketItems.find(item => item.id === selectedItemId);
+            if (selectedItem) {
+                // Assume que o preço de venda é 90% do preço de compra
+                sellPriceDisplay.textContent = formatCurrency(selectedItem.price * 0.9);
+            } else {
+                sellPriceDisplay.textContent = formatCurrency(0);
+            }
+        }
+
+        // --- Funções de Lógica do Jogo ---
+
+        /**
+         * Inicia a simulação com o orçamento definido.
+         */
+        function startGame() {
+            const initialBudget = parseFloat(initialBudgetInput.value);
+            if (isNaN(initialBudget) || initialBudget <= 0) {
+                showMessage(setupMessageBox, 'Por favor, insira um orçamento inicial válido e positivo.', 'error');
+                return;
+            }
+
+            budget = initialBudget;
+            inventory = {}; // Limpa o inventário
+            updateBudgetDisplay();
+            updateInventoryDisplay();
+            populateMarketDropdowns(); // Popula os dropdowns com itens do mercado
+
+            initialSetupDiv.classList.add('hidden');
+            gameAreaDiv.classList.remove('hidden');
+            showMessage(setupMessageBox, 'Simulação iniciada com sucesso!', 'success');
+        }
+
+        /**
+         * Reinicia a simulação para o estado inicial.
+         */
+        function resetGame() {
+            budget = 0;
+            inventory = {};
+            updateBudgetDisplay();
+            updateInventoryDisplay();
+
+            initialBudgetInput.value = '10000'; // Define um valor padrão
+            initialSetupDiv.classList.remove('hidden');
+            gameAreaDiv.classList.add('hidden');
+            showMessage(setupMessageBox, 'Simulação reiniciada. Defina um novo orçamento.', 'success');
+        }
+
+        /**
+         * Lógica para comprar um item.
+         */
+        function buyItem() {
+            const selectedItemId = buyItemSelect.value;
+            const quantity = parseInt(buyQuantityInput.value);
+
+            if (!selectedItemId || isNaN(quantity) || quantity <= 0) {
+                showMessage(buyMessageBox, 'Por favor, selecione um item e insira uma quantidade válida.', 'error');
+                return;
+            }
+
+            const item = marketItems.find(i => i.id === selectedItemId);
+            if (!item) {
+                showMessage(buyMessageBox, 'Item não encontrado no mercado.', 'error');
+                return;
+            }
+
+            const cost = item.price * quantity;
+
+            if (budget < cost) {
+                showMessage(buyMessageBox, `Orçamento insuficiente! Você precisa de ${formatCurrency(cost)} mas tem ${formatCurrency(budget)}.`, 'error');
+                return;
+            }
+
+            budget -= cost;
+            inventory[item.id] = (inventory[item.id] || 0) + quantity;
+
+            updateBudgetDisplay();
+            updateInventoryDisplay();
+            showMessage(buyMessageBox, `Você comprou ${quantity} de ${item.name} por ${formatCurrency(cost)}.`, 'success');
+        }
+
+        /**
+         * Lógica para vender um item.
+         */
+        function sellItem() {
+            const selectedItemId = sellItemSelect.value;
+            const quantity = parseInt(sellQuantityInput.value);
+
+            if (!selectedItemId || isNaN(quantity) || quantity <= 0) {
+                showMessage(sellMessageBox, 'Por favor, selecione um item e insira uma quantidade válida.', 'error');
+                return;
+            }
+
+            const item = marketItems.find(i => i.id === selectedItemId);
+            if (!item) {
+                showMessage(sellMessageBox, 'Item não encontrado para venda.', 'error');
+                return;
+            }
+
+            if (!inventory[item.id] || inventory[item.id] < quantity) {
+                showMessage(sellMessageBox, `Você não tem ${quantity} de ${item.name} para vender. Você tem ${inventory[item.id] || 0}.`, 'error');
+                return;
+            }
+
+            // O preço de venda é um pouco menor que o de compra
+            const revenue = (item.price * 0.9) * quantity;
+
+            budget += revenue;
+            inventory[item.id] -= quantity;
+
+            updateBudgetDisplay();
+            updateInventoryDisplay();
+            showMessage(sellMessageBox, `Você vendeu ${quantity} de ${item.name} por ${formatCurrency(revenue)}.`, 'success');
+        }
+
+        // --- Listeners de Eventos ---
+
+        startButton.addEventListener('click', startGame);
+        resetButton.addEventListener('click', resetGame);
+        buyButton.addEventListener('click', buyItem);
+        sellButton.addEventListener('click', sellItem);
+
+        buyItemSelect.addEventListener('change', updateBuyPriceDisplay);
+        sellItemSelect.addEventListener('change', updateSellPriceDisplay);
+
+        // Inicializa o estado da interface quando a página carrega
+        window.onload = () => {
+            // Garante que os dropdowns sejam populados no carregamento, mesmo que o jogo ainda não tenha começado
+            // para que os preços possam ser exibidos corretamente se o usuário interagir antes de iniciar
+            populateMarketDropdowns();
+            updateBudgetDisplay(); // Exibe R$ 0.00 inicialmente
+            updateInventoryDisplay(); // Exibe "Nenhum item" inicialmente
+        };
+    </script>
+</body>
+</html>
